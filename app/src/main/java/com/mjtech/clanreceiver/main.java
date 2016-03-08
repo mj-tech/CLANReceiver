@@ -61,7 +61,7 @@ public class main extends AppCompatActivity {
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
             Parcelable[] rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
             NdefRecord record = ((NdefMessage) rawMessages[0]).getRecords()[0];
-            new attendance().execute(new String(record.getType()));
+            new attendance().execute(new String(record.getPayload()));
         }
     }
 
@@ -104,7 +104,6 @@ public class main extends AppCompatActivity {
                 writer.flush();
                 writer.close();
                 os.close();
-
                 obj = new JSONObject(readStream(con.getInputStream()));
             } catch (Exception ignored) {
                 ignored.printStackTrace();
@@ -122,7 +121,7 @@ public class main extends AppCompatActivity {
                 } else {
                     tv.getBackground().setColorFilter(0xFFFF6666, PorterDuff.Mode.ADD);
                     tv.setText("✖");
-                    ((TextView) findViewById(R.id.message)).setText("Failed.");
+                    ((TextView) findViewById(R.id.message)).setText(obj.getString("errmsg"));
                 }
             } catch (Exception e) {}
             Handler handler = new Handler();
