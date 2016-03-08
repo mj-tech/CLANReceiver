@@ -3,6 +3,7 @@ package com.mjtech.clanreceiver;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -15,24 +16,35 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+
 public class main extends AppCompatActivity {
     NfcAdapter nfcAdapter;
+    String rm = "AC2 5506";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         nfcAdapter.setNdefPushMessage(null, this);
-        //nfcAdapter.setNdefPushMessage(new NdefMessage(NdefRecord.createMime("token", string.getBytes())), this);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ((TextView)findViewById(R.id.room)).setText(rm);
         waiting();
     }
 
@@ -49,7 +61,6 @@ public class main extends AppCompatActivity {
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
             Parcelable[] rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
             NdefRecord record = ((NdefMessage) rawMessages[0]).getRecords()[0];
-            Log.e("Received",new String(record.getType()));
             new attendance().execute(new String(record.getType()));
         }
     }
@@ -60,7 +71,8 @@ public class main extends AppCompatActivity {
         nfcAdapter.disableForegroundDispatch(this);
     }
 
-    private class attendance extends AsyncTask<String, Void, Boolean> {
+    private class attendance extends AsyncTask<String, Void, Void> {
+        JSONObject obj;
         protected void onPreExecute() {
             TextView tv = (TextView)findViewById(R.id.icon);
             tv.getBackground().setColorFilter(0xFF6666FF, PorterDuff.Mode.ADD);
@@ -68,33 +80,51 @@ public class main extends AppCompatActivity {
             ((TextView)findViewById(R.id.message)).setText("Connecting...");
         }
 
-        protected Boolean doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
             try {
-                URL url = new URL("http://mjtech.cf/");
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                String stat = readStream(con.getInputStream());
-                if(stat.equals("<h1>mjtech</h1>")) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+                URL url = new URL("https://mjtech.cf/api/attendance/attend.php");
+                HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                con.setHostnameVerifier(new HostnameVerifier() {
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                });
+                con.setRequestMethod("POST");
+                con.setDoOutput(true);
+
+                Uri.Builder builder = new Uri.Builder().appendQueryParameter("session", params[0])
+                                                       .appendQueryParameter("room", rm);
+
+                String query = builder.build().getEncodedQuery();
+
+                OutputStream os = con.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(query);
+                writer.flush();
+                writer.close();
+                os.close();
+
+                obj = new JSONObject(readStream(con.getInputStream()));
+            } catch (Exception ignored) {
+                ignored.printStackTrace();
             }
-            return false;
+            return null;
         }
 
-        protected void onPostExecute(Boolean stat) {
+        protected void onPostExecute(Void voided) {
             TextView tv = (TextView) findViewById(R.id.icon);
-            if (stat) {
-                tv.getBackground().setColorFilter(0xFF33CC33, PorterDuff.Mode.ADD);
-                tv.setText("✔");
-                ((TextView) findViewById(R.id.message)).setText("Attended.");
-            } else {
-                tv.getBackground().setColorFilter(0xFFFF6666, PorterDuff.Mode.ADD);
-                tv.setText("✖");
-                ((TextView) findViewById(R.id.message)).setText("Failed.");
-            }
+            try {
+                if (obj.getInt("err") == 0) {
+                    tv.getBackground().setColorFilter(0xFF33CC33, PorterDuff.Mode.ADD);
+                    tv.setText("✔");
+                    ((TextView) findViewById(R.id.message)).setText("Attended.");
+                } else {
+                    tv.getBackground().setColorFilter(0xFFFF6666, PorterDuff.Mode.ADD);
+                    tv.setText("✖");
+                    ((TextView) findViewById(R.id.message)).setText("Failed.");
+                }
+            } catch (Exception e) {}
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override

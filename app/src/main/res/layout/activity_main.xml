@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="10sp"
-        android:text="AC2 1610"
+        android:text=""
+        android:id="@+id/room"
         android:textColor="#FFF"
         android:textSize="40sp"
         android:background="#9999FF"/>
