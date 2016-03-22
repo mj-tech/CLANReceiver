@@ -117,7 +117,7 @@ public class main extends AppCompatActivity {
                 if (obj.getInt("err") == 0) {
                     tv.getBackground().setColorFilter(0xFF33CC33, PorterDuff.Mode.ADD);
                     tv.setText("✔");
-                    ((TextView) findViewById(R.id.message)).setText("Attended.");
+                    ((TextView) findViewById(R.id.message)).setText("Attendance Recorded.");
                 } else {
                     tv.getBackground().setColorFilter(0xFFFF6666, PorterDuff.Mode.ADD);
                     tv.setText("✖");
