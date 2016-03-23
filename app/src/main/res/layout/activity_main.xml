@@ -14,7 +14,7 @@
         android:id="@+id/room"
         android:textColor="#FFF"
         android:textSize="40sp"
-        android:background="#9999FF"/>
+        android:background="#996600"/>
 
     <TextView
         android:layout_width="200sp"
@@ -37,6 +37,6 @@
         android:padding="10sp"
         android:text="TEXT"
         android:textColor="#000"
-        android:textSize="30sp"
+        android:textSize="25sp"
         android:id="@+id/message"/>
 </RelativeLayout>

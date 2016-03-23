@@ -1,5 +1,6 @@
 package com.mjtech.clanreceiver;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.PorterDuff;
@@ -32,7 +33,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
-public class main extends AppCompatActivity {
+public class main extends Activity {
     NfcAdapter nfcAdapter;
     String rm = "AC2 5506";
 
@@ -136,7 +137,7 @@ public class main extends AppCompatActivity {
 
     private void waiting() {
         TextView tv = (TextView) findViewById(R.id.icon);
-        tv.getBackground().setColorFilter(0xFF9999FF, PorterDuff.Mode.ADD);
+        tv.getBackground().setColorFilter(0xFFFF9900, PorterDuff.Mode.ADD);
         tv.setText("▼");
         ((TextView) findViewById(R.id.message)).setText("Please Tap Your Phone.");
     }
